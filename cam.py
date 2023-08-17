@@ -155,6 +155,7 @@ def main():
             retry()
             continue
 
+        print("socket closed")
         retry()
 
 
