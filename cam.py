@@ -80,7 +80,7 @@ def main():
         password = input("enter password: ")
         data["password"] = password
 
-    connect_timeout = data.get("connect_timeout") or 1
+    connect_timeout = data.get("connect_timeout")
 
     global retry_interval
     global retry_command

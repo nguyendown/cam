@@ -33,6 +33,8 @@ Center / Trigger Alarm Output"
 
 `password`: Password.
 
+`connect_timeout`: Timeout khi kết nối đến `host`.
+
 `retry_interval`: Khoảng thời gian giữa các lần thử lại kết nối.
 
 `retry_command`: Command mỗi khi thử lại kết nối.
