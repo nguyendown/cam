@@ -2,13 +2,12 @@ import time
 import requests
 import subprocess
 
-from yaml import load, dump
-from yaml import Loader, Dumper
+from yaml import safe_load, dump
 
 ALERT_STREAM_PATH = "/ISAPI/Event/notification/alertStream"
 
 config_path = "config.yaml"
-config_yaml = """
+config_template = """
 host:
 username:
 password:
@@ -43,27 +42,28 @@ def retry():
 
 def main():
     last_command_time_list = {}
+    data = safe_load(config_template)
 
     try:
         with open(config_path, "r") as f:
-            data = load(f, Loader=Loader)
+            new_data = safe_load(f)
+            data.update(new_data)
     except IOError as e:
         print("exception caught:", e)
-        data = load(config_yaml, Loader=Loader)
 
     # print(data)
 
-    host = data["host"]
+    host = data.get("host")
     if not host:
         host = input("enter host: ")
         data["host"] = host
 
-    username = data["username"]
+    username = data.get("username")
     if not username:
         username = input("enter username: ")
         data["username"] = username
 
-    password = data["password"]
+    password = data.get("password")
     if not password:
         password = input("enter password: ")
         data["password"] = password
