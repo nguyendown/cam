@@ -14,6 +14,7 @@ password:
 connect_timeout: null
 retry_interval: 2
 retry_command: play-audio -s notification retry.ogg
+retry_command_interval: 7
 default_command: play-audio -s notification event.ogg
 channels:
   4:
@@ -35,8 +36,13 @@ channels:
 
 
 def retry():
-    if retry_command:
+    current_time = time.time()
+    if (
+        retry_command
+        and current_time - retry_command_interval > last_retry_command_time
+    ):
         subprocess.Popen(retry_command, shell=True)
+        last_retry_time = current_time
     print("retry in", retry_interval)
     time.sleep(retry_interval)
 
@@ -72,8 +78,12 @@ def main():
     connect_timeout = data.get("connect_timeout") or 1
     global retry_interval
     global retry_command
+    global retry_command_interval
+    global last_retry_command_time
     retry_interval = data.get("retry_interval") or 0
     retry_command = data.get("retry_command")
+    retry_command_interval = data.get("retry_command_interval") or 0
+    last_retry_command_time = 0
 
     default_command = data.get("default_command")
 
