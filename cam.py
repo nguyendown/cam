@@ -16,6 +16,7 @@ retry_interval: 2
 retry_command: play-audio -s notification retry.ogg
 retry_command_interval: 7
 default_command: play-audio -s notification event.ogg
+default_command_interval: 5
 channels: null
 """
 
@@ -80,6 +81,7 @@ def main():
         data["password"] = password
 
     connect_timeout = data.get("connect_timeout") or 1
+
     global retry_interval
     global retry_command
     global retry_command_interval
@@ -90,6 +92,7 @@ def main():
     last_retry_command_time = 0
 
     default_command = data.get("default_command")
+    default_command_interval = data.get("default_command_interval") or 0
 
     channels = data.get("channels")
     if not channels:
@@ -150,7 +153,11 @@ def main():
                 if event_type in event_types:
                     current_time = time.time()
                     last_command_time = last_command_time_list.get(event_type) or 0
-                    command_interval = event_types[event_type]["interval"] or 0
+                    command_interval = (
+                        event_types[event_type]["interval"]
+                        or default_command_interval
+                        or 0
+                    )
                     command = (
                         event_types[event_type]["command"]
                         or channels[channel_id]["channel_command"]

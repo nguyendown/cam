@@ -38,7 +38,10 @@ Center / Trigger Alarm Output"
 `retry_command`: Command mỗi khi thử lại kết nối.
 
 `retry_command_interval`: Khoảng thời gian giữa các cần chạy `retry_command`.
+
 `default_command`: Command mỗi khi có event.
+
+`default_command_interval`: Khoảng thời gian giữa các lần chạy `default_command`.
 
 `channels`: Danh sách các channel cần theo dõi.
 
