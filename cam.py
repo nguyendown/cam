@@ -16,6 +16,10 @@ retry_interval: 2
 retry_command: play-audio -s notification retry.ogg
 retry_command_interval: 7
 default_command: play-audio -s notification event.ogg
+channels: null
+"""
+
+config_channel = """
 channels:
   4:
     channel_command: termux-notification -i 1
@@ -86,6 +90,11 @@ def main():
     last_retry_command_time = 0
 
     default_command = data.get("default_command")
+
+    channels = data.get("channels")
+    if not channels:
+        data.update(safe_load(config_channel))
+        channels = data["channels"]
 
     try:
         with open(config_path, "w") as f:
