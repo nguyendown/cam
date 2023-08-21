@@ -13,7 +13,7 @@ username:
 password:
 retry_interval: 2
 retry_command: play-audio -s notification retry.ogg
-command: play-audio -s notification event.ogg
+default_command: play-audio -s notification event.ogg
 channels:
   4:
     channel_command: termux-notification -i 1
@@ -70,8 +70,10 @@ def main():
 
     global retry_interval
     global retry_command
-    retry_interval = data["retry_interval"] or 2
-    retry_command = data["retry_command"]
+    retry_interval = data.get("retry_interval") or 0
+    retry_command = data.get("retry_command")
+
+    default_command = data.get("default_command")
 
     try:
         with open(config_path, "w") as f:
@@ -111,7 +113,7 @@ def main():
                 end = chunk.find(b"<", start)
                 channel_id = int(chunk[start:end])
 
-                if channel_id not in data["channels"]:
+                if channel_id not in channels:
                     continue
 
                 start = chunk.find(b"<dateTime>", end) + 10
@@ -122,22 +124,15 @@ def main():
                 end = chunk.find(b"<", start)
                 event_type = chunk[start:end].decode()
 
-                event_types = data["channels"][channel_id]["event_types"]
+                event_types = channels[channel_id]["event_types"]
                 if event_type in event_types:
                     current_time = time.time()
                     last_command_time = last_command_time_list.get(event_type) or 0
-                    command_interval = (
-                        data["channels"][channel_id]["event_types"][event_type][
-                            "interval"
-                        ]
-                        or 0
-                    )
+                    command_interval = event_types[event_type]["interval"] or 0
                     command = (
-                        data["channels"][channel_id]["event_types"][event_type][
-                            "command"
-                        ]
-                        or data["channels"][channel_id]["channel_command"]
-                        or data["command"]
+                        event_types[event_type]["command"]
+                        or channels[channel_id]["channel_command"]
+                        or default_command
                     )
                     if command and current_time - last_command_time >= command_interval:
                         subprocess.Popen(command, shell=True)

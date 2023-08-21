@@ -37,14 +37,14 @@ Center / Trigger Alarm Output"
 
 `retry_command`: Command mỗi khi thử lại kết nối.
 
-`command`: Command mỗi khi có event.
+`default_command`: Command mỗi khi có event.
 
 `channels`: Danh sách các channel cần theo dõi.
 
 Channel
 -------
 
-`channel_command`: Command riêng của channel. Override config `command`.
+`channel_command`: Command riêng của channel. Override config `default_command`.
 
 `event_types`: Danh sách các event cần theo dõi. (VMD, linedetection)
 
@@ -52,7 +52,7 @@ Event
 -----
 
 `command`: Command riêng của event. Override config `channel_command`
-và `command`.
+và `default_command`.
 
 `interval`: Khoảng thời gian giữa các lần chạy command.
 
