@@ -11,6 +11,7 @@ config_template = """
 host:
 username:
 password:
+connect_timeout: null
 retry_interval: 2
 retry_command: play-audio -s notification retry.ogg
 default_command: play-audio -s notification event.ogg
@@ -68,6 +69,7 @@ def main():
         password = input("enter password: ")
         data["password"] = password
 
+    connect_timeout = data.get("connect_timeout") or 1
     global retry_interval
     global retry_command
     retry_interval = data.get("retry_interval") or 0
@@ -90,6 +92,7 @@ def main():
                 auth=requests.auth.HTTPDigestAuth(username, password),
                 verify=False,
                 stream=True,
+                timeout=(connect_timeout, None),
             )
 
             if response.status_code != 200:
