@@ -157,7 +157,6 @@ def main():
                     command_interval = (
                         event_types[event_type].get("interval")
                         or default_command_interval
-                        or 0
                     )
                     command = (
                         event_types[event_type].get("command")
