@@ -155,13 +155,13 @@ def main():
                     current_time = time.time()
                     last_command_time = last_command_time_list.get(event_type) or 0
                     command_interval = (
-                        event_types[event_type]["interval"]
+                        event_types[event_type].get("interval")
                         or default_command_interval
                         or 0
                     )
                     command = (
-                        event_types[event_type]["command"]
-                        or channels[channel_id]["channel_command"]
+                        event_types[event_type].get("command")
+                        or channels[channel_id].get("channel_command")
                         or default_command
                     )
                     if command and current_time - last_command_time >= command_interval:
