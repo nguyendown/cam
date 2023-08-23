@@ -41,13 +41,14 @@ channels:
 
 
 def retry():
+    global last_retry_command_time
     current_time = time.time()
     if (
         retry_command
         and current_time - retry_command_interval > last_retry_command_time
     ):
         subprocess.Popen(retry_command, shell=True)
-        last_retry_time = current_time
+        last_retry_command_time = current_time
     print("retry in", retry_interval)
     time.sleep(retry_interval)
 
