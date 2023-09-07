@@ -150,7 +150,7 @@ def main():
                 end = chunk.find(b"<", start)
                 event_type = chunk[start:end].decode()
 
-                event_types = channels[channel_id]["event_types"]
+                event_types = channels[channel_id].get("event_types")
                 if event_type in event_types:
                     current_time = time.time()
                     last_command_time = last_command_time_list.get(event_type) or 0
