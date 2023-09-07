@@ -1,13 +1,14 @@
 Usage
 =====
 
-Lần chạy đầu tiên cần cài requirements.
+``` shell
+python3 -m venv .venv
+source .venv/bin/activate
+python3 -m pip install -r requirements.txt
+```
 
-```
-pip3 install -r requirements.txt
-```
-
-```
+``` shell
+source .venv/bin/activate
 python3 cam.py
 ```
 
