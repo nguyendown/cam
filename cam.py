@@ -30,6 +30,7 @@ channels:
       VMD:
         command: null
         interval: 3
+      linedetection:
   5:
     channel_command: play-audio -s notification ch5.ogg
     event_types:
@@ -39,6 +40,9 @@ channels:
       linedetection:
         command: null
         interval: 5
+  6:
+    event_types:
+      linedetection:
 """
 
 
