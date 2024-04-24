@@ -1,7 +1,9 @@
+import os
 import time
 import requests
 import subprocess
 
+from pathlib import Path
 from yaml import safe_load, dump
 
 ALERT_STREAM_PATH = "/ISAPI/Event/notification/alertStream"
@@ -54,6 +56,10 @@ def retry():
 
 
 def main():
+    current_path = Path(__file__).absolute().parent
+    config_path = current_path / "config.yaml"
+    os.chdir(current_path)
+
     last_command_time_list = {}
     data = safe_load(config_template)
 
