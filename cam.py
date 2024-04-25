@@ -85,7 +85,7 @@ def process_chunk(chunk):
         event_config = events.get(event)
         current_time = time.time()
         t = last_command_time_list.get(channel_id)
-        last_command_time = t.get(event) if t else 0
+        last_command_time = t.get(event) if t and t.get(event) else 0
         command_interval = (
             event_config.get("interval") if event_config else None
         ) or default_command_interval
