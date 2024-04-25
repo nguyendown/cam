@@ -1,7 +1,9 @@
+import argparse
 import os
 import time
 import requests
 import subprocess
+import traceback
 
 from pathlib import Path
 from yaml import safe_load, dump
@@ -26,14 +28,14 @@ config_channel = """
 channels:
   4:
     channel_command: termux-notification -i 1
-    event_types:
+    events:
       VMD:
         command: null
         interval: 3
       linedetection:
   5:
     channel_command: play-audio -s notification ch5.ogg
-    event_types:
+    events:
       VMD:
         command: play-audio -s notification vmd.ogg
         interval: 7
@@ -41,7 +43,7 @@ channels:
         command: null
         interval: 5
   6:
-    event_types:
+    events:
       linedetection:
 """
 
@@ -59,60 +61,122 @@ def retry():
     time.sleep(retry_interval)
 
 
+def process_chunk(chunk):
+    # print(chunk)
+    start = chunk.find(b"hannelID>") + 9
+    end = chunk.find(b"<", start)
+    channel_id = int(chunk[start:end])
+
+    if channel_id not in channels:
+        return
+
+    start = chunk.find(b"<dateTime>", end) + 10
+    end = chunk.find(b"<", start)
+    date_time = chunk[start:end]
+
+    start = chunk.find(b"<eventType>", end) + 11
+    end = chunk.find(b"<", start)
+    event = chunk[start:end].decode()
+
+    events = channels[channel_id].get("events")
+    if event in events:
+        print("{0:2} | {1} | {2}".format(channel_id, date_time.decode(), event))
+
+        event_config = events.get(event)
+        current_time = time.time()
+        t = last_command_time_list.get(channel_id)
+        last_command_time = t.get(event) if t else 0
+        command_interval = (
+            event_config.get("interval") if event_config else None
+        ) or default_command_interval
+        command = (
+            (event_config.get("command") if event_config else None)
+            or channels[channel_id].get("channel_command")
+            or default_command
+        )
+        if command and current_time - last_command_time >= command_interval:
+            subprocess.Popen(command, shell=True)
+            last_command_time_list[channel_id] = {}
+            last_command_time_list[channel_id][event] = current_time
+
+
 def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-c", "--config", help="Config path.")
+    parser.add_argument("-t", "--test", help="Test chunks.")
+    parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Enable verbose output."
+    )
+
+    args = parser.parse_args()
+
     current_path = Path(__file__).absolute().parent
-    config_path = current_path / "config.yaml"
+    config_path = args.config or current_path / "config.yaml"
     os.chdir(current_path)
 
+    global last_command_time_list
     last_command_time_list = {}
-    data = safe_load(config_template)
+    config = safe_load(config_template)
 
     try:
         with open(config_path, "r") as f:
-            new_data = safe_load(f)
-            data.update(new_data)
+            new_config = safe_load(f)
+            config.update(new_config)
     except IOError as e:
         print("exception caught:", e)
 
-    # print(data)
+    global verbose
+    verbose = args.verbose or config.get("verbose") or False
+    if verbose:
+        print(config)
 
-    host = data.get("host")
+    host = config.get("host")
     if not host:
         host = input("enter host: ")
-        data["host"] = host
+        config["host"] = host
 
-    username = data.get("username")
+    username = config.get("username")
     if not username:
         username = input("enter username: ")
-        data["username"] = username
+        config["username"] = username
 
-    password = data.get("password")
+    password = config.get("password")
     if not password:
         password = input("enter password: ")
-        data["password"] = password
+        config["password"] = password
 
-    connect_timeout = data.get("connect_timeout")
+    connect_timeout = config.get("connect_timeout")
 
     global retry_interval
     global retry_command
     global retry_command_interval
     global last_retry_command_time
-    retry_interval = data.get("retry_interval") or 0
-    retry_command = data.get("retry_command")
-    retry_command_interval = data.get("retry_command_interval") or 0
+    retry_interval = config.get("retry_interval") or 0
+    retry_command = config.get("retry_command")
+    retry_command_interval = config.get("retry_command_interval") or 0
     last_retry_command_time = 0
 
-    default_command = data.get("default_command")
-    default_command_interval = data.get("default_command_interval") or 0
+    global default_command
+    global default_command_interval
+    default_command = config.get("default_command")
+    default_command_interval = config.get("default_command_interval") or 0
 
-    channels = data.get("channels")
+    global channels
+    channels = config.get("channels")
     if not channels:
-        data.update(safe_load(config_channel))
-        channels = data["channels"]
+        config.update(safe_load(config_channel))
+        channels = config["channels"]
+
+    if args.test:
+        with open(args.test, "rb") as f:
+            for chunk in f:
+                process_chunk(chunk)
+        return
 
     try:
         with open(config_path, "w") as f:
-            dump(data, f, sort_keys=False)
+            dump(config, f, sort_keys=False)
     except Exception as e:
         print("exception caught:", e)
 
@@ -144,48 +208,15 @@ def main():
                 content_length = int(chunk[start:end])
                 chunk = chunk[end + 4 :] + raw.read(content_length - 128 + end + 4)
                 # print(chunk)
+                process_chunk(chunk)
 
-                start = chunk.find(b"hannelID>", end) + 9
-                end = chunk.find(b"<", start)
-                channel_id = int(chunk[start:end])
-
-                if channel_id not in channels:
-                    continue
-
-                start = chunk.find(b"<dateTime>", end) + 10
-                end = chunk.find(b"<", start)
-                date_time = chunk[start:end]
-
-                start = chunk.find(b"<eventType>", end) + 11
-                end = chunk.find(b"<", start)
-                event_type = chunk[start:end].decode()
-
-                event_types = channels[channel_id].get("event_types")
-                if event_type in event_types:
-                    current_time = time.time()
-                    last_command_time = last_command_time_list.get(event_type) or 0
-                    command_interval = (
-                        event_types[event_type].get("interval")
-                        or default_command_interval
-                    )
-                    command = (
-                        event_types[event_type].get("command")
-                        or channels[channel_id].get("channel_command")
-                        or default_command
-                    )
-                    if command and current_time - last_command_time >= command_interval:
-                        subprocess.Popen(command, shell=True)
-                        last_command_time_list[event_type] = current_time
-
-                    print(
-                        "{0:2} | {1} | {2}".format(
-                            channel_id, date_time.decode(), event_type
-                        )
-                    )
         except KeyboardInterrupt:
             break
         except Exception as e:
-            print("exception caught:", e)
+            if verbose:
+                traceback.print_exc()
+            else:
+                print("exception caught:", e)
             retry()
             continue
 

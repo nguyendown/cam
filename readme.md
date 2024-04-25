@@ -53,7 +53,7 @@ Channel
 
 `channel_command`: Command riêng của channel. Override config `default_command`.
 
-`event_types`: Danh sách các event cần theo dõi. (VMD, linedetection)
+`events`: Danh sách các event cần theo dõi e.g. VMD, linedetection.
 
 Event
 -----
